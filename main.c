@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-const int64_t privatePackedIntPow(size_t exponent, size_t power) // I wish this didn't have to exist but... without constant... maths equals sad ;(
+int64_t privatePackedIntPow(size_t exponent, size_t power) // I wish this didn't have to exist but... without constant... maths equals sad ;( another shitty runtime? calculation
 {
     int64_t number = 1;
 
@@ -21,7 +21,7 @@ const int64_t privatePackedIntPow(size_t exponent, size_t power) // I wish this 
 
 struct privatePackedInt
 {
-    char dataSize;
+    char data_size;
     char data[sizeof(int) * 4];
 };
 /*
@@ -39,7 +39,7 @@ char *packint(int integer[4], size_t *totalDataOut)
         unsigned bytes = 0;
         while (current_integer > privatePackedIntPow(2, 8 * ++bytes) - 1)
             ; // Gets the maximum ammount of bytes needed to store integer
-        packed_ints.dataSize |= (bytes - 1) << i * 2;
+        packed_ints.data_size |= (bytes - 1) << i * 2;
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
         memcpy(&packed_ints.data[bytes_used], &current_integer + sizeof(current_integer - bytes), bytes);
 #else
@@ -57,7 +57,7 @@ int *unpackint(char *data)
     char bytes_copied = 0;
     for (int i = sizeof(char) * 4 - 1; i >= 0; i--)
     {
-        char dest = ((packed_ints.dataSize >> 2 * i) & 0x03) + 1;
+        char dest = ((packed_ints.data_size >> 2 * i) & 0x03) + 1;
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
         memcpy(((char *)&integer)[i * sizeof(int) + (dest - 1)], &packed_ints.data[bytes_copied], dest);
 #else
@@ -67,17 +67,3 @@ int *unpackint(char *data)
     }
     return integer;
 }
-//#define __PackedIntDebug__ 
-#ifdef __PackedIntDebug__
-int main()
-{
-    int integer[4] = {-1, 256, 512, 4};
-    size_t totalDataOut;
-    char * packedInt = packint(integer, &totalDataOut);
-    int* integer2 = unpackint(packedInt);
-    for(size_t i = 0; i != 4; i++)
-    {
-        assert(integer[i] == integer2[i]);
-    }
-}
-#endif
